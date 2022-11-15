@@ -36,11 +36,54 @@ const App = () => {
   const [conversationId, setCoversationId] = useState("");
   const [name, setName] = useState("");
   const [allUserData, setAllUserData] = useState([]);
+  const [id, setId] = useState('');
+  const [getData, setGetData] = useState([]);
+
 
   useEffect(() => {
     createCollectionIndexedDB();
     getAllData();
+    console.log(allUserData);
   }, []);
+
+  const handleDelete = (item) => {
+    const dbPromise = idb.open("draft-data", 1);
+    dbPromise.onsuccess = () => {
+      const db = dbPromise.result;
+      const tx = db.transaction("emailData", "readwrite");
+      const emailData = tx.objectStore("emailData");
+      const data = emailData.delete(item.id);
+      data.onsuccess = (query) => {
+        console.log('deleted');
+        getAllData();
+      };
+      data.onerror = (error) => {
+        console.log(error);
+      };
+      tx.oncomplete = () => {
+        db.close();
+      };
+    };
+  };
+
+  const handleFindData = () => {
+    const dbPromise = idb.open("draft-data", 1);
+    dbPromise.onsuccess = () => {
+      const db = dbPromise.result;
+      const tx = db.transaction("emailData", "readonly");
+      const emailData = tx.objectStore("emailData");
+      const data = emailData.get(id);
+      data.onsuccess = (query) => {
+        setGetData(query.srcElement.result);
+      };
+      data.onerror = (error) => {
+        console.log(error);
+      };
+      tx.oncomplete = () => {
+        db.close();
+      };
+    };
+  };
 
   const getAllData = () => {
     const dbPromise = idb.open("draft-data", 1);
@@ -88,7 +131,7 @@ const App = () => {
     }
   };
   return (
-    <div className="App">
+    <div className="App row">
       <div className="col-md-6">
         <table className="table table-dark">
           <thead>
@@ -104,8 +147,7 @@ const App = () => {
                 <td>{item?.conversationId}</td>
                 <td>{item?.name}</td>
                 <td>
-                  <button className="btn btn-success">Edit</button>{" "}
-                  <button className="btn btn-danger">Delete</button>{" "}
+                  <button className="btn btn-danger" onClick={() => handleDelete(item)}>Delete</button>
                 </td>
               </tr>
             ))}
@@ -142,11 +184,25 @@ const App = () => {
               We'll never share your details with anyone else.
             </small>
           </div>
-          <br></br>
         </form>
         <button className="btn btn-primary" onClick={handleSubmit}>
           Submit
         </button>
+        <hr style={{ color: "white" }}></hr>
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Get data by conversation Id"
+          value={id}
+          onChange={(e) => setId(e.target.value)}
+        />
+        <br></br>
+        <button className="btn btn-primary" onClick={handleFindData}>
+          Get data by conversation Id
+        </button><br></br><br></br>
+        <p style={{color:'white'}}>
+          {JSON.stringify(getData)}
+        </p>
       </div>
     </div>
   );
