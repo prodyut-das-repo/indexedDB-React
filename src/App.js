@@ -197,7 +197,7 @@ const App = () => {
           onChange={(e) => setId(e.target.value)}
         />
         <br></br>
-        <button className="btn btn-primary" onClick={handleFindData}>
+        <button className="btn btn-info" onClick={handleFindData}>
           Get data by conversation Id
         </button><br></br><br></br>
         <p style={{color:'white'}}>
