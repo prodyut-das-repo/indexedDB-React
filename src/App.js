@@ -36,9 +36,9 @@ const App = () => {
   const [conversationId, setCoversationId] = useState("");
   const [name, setName] = useState("");
   const [allUserData, setAllUserData] = useState([]);
-  const [id, setId] = useState('');
+  const [id, setId] = useState("");
   const [getData, setGetData] = useState([]);
-
+  const [num, setNum] = useState(0);
 
   useEffect(() => {
     createCollectionIndexedDB();
@@ -54,7 +54,7 @@ const App = () => {
       const emailData = tx.objectStore("emailData");
       const data = emailData.delete(item.id);
       data.onsuccess = (query) => {
-        console.log('deleted');
+        console.log("deleted");
         getAllData();
       };
       data.onerror = (error) => {
@@ -69,11 +69,13 @@ const App = () => {
   const handleFindData = () => {
     const dbPromise = idb.open("draft-data", 1);
     dbPromise.onsuccess = () => {
+      console.log("start");
       const db = dbPromise.result;
       const tx = db.transaction("emailData", "readonly");
       const emailData = tx.objectStore("emailData");
       const data = emailData.get(id);
       data.onsuccess = (query) => {
+        console.log("found");
         setGetData(query.srcElement.result);
       };
       data.onerror = (error) => {
@@ -104,7 +106,7 @@ const App = () => {
     };
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (num) => {
     const dbPromise = idb.open("draft-data", 1);
     if (conversationId && name) {
       dbPromise.onsuccess = () => {
@@ -127,12 +129,55 @@ const App = () => {
           alert(error);
           console.log(error);
         };
+        if (num) {
+          for (let index = 1; index <= num; index++) {
+            const data = emailData.put({
+              id: conversationId + index,
+              conversationId: conversationId + index,
+              name: name + index,
+            });
+            data.onsuccess = () => {
+              tx.oncomplete = () => {
+                db.close();
+                console.log("user added");
+              };
+              getAllData();
+            };
+            data.onerror = (error) => {
+              alert(error);
+              console.log(error);
+            };
+          }
+        }
       };
     }
+  };
+
+  const clearAll = () => {
+    const dbPromise = idb.open("draft-data", 1);
+    dbPromise.onsuccess = () => {
+      const db = dbPromise.result;
+      const tx = db.transaction("emailData", "readwrite");
+      const emailData = tx.objectStore("emailData");
+      const data = emailData.clear();
+      data.onsuccess = (query) => {
+        console.log("all cleared");
+      };
+      data.onerror = (error) => {
+        console.log(error);
+      };
+      tx.oncomplete = () => {
+        db.close();
+        getAllData();
+      };
+    };
   };
   return (
     <div className="App row">
       <div className="col-md-6">
+        <button className="btn btn-danger" onClick={clearAll}>
+          Clear all data
+        </button>
         <table className="table table-dark">
           <thead>
             <tr>
@@ -147,7 +192,12 @@ const App = () => {
                 <td>{item?.conversationId}</td>
                 <td>{item?.name}</td>
                 <td>
-                  <button className="btn btn-danger" onClick={() => handleDelete(item)}>Delete</button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleDelete(item)}
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
@@ -162,7 +212,6 @@ const App = () => {
             <input
               type="text"
               className="form-control"
-              id="exampleInputEmail1"
               aria-describedby="emailHelp"
               placeholder="Enter id"
               value={conversationId}
@@ -175,7 +224,6 @@ const App = () => {
             <input
               type="text"
               className="form-control"
-              id="exampleInputPassword1"
               placeholder="Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -185,9 +233,21 @@ const App = () => {
             </small>
           </div>
         </form>
-        <button className="btn btn-primary" onClick={handleSubmit}>
-          Submit
-        </button>
+        <button className="btn btn-primary" onClick={() => handleSubmit(null)}>
+          Add This Entry
+        </button>{' '}
+        <span>
+          <input
+            type="number"
+            className="input-number"
+            style={{ width: "100px" }}
+            placeholder="Number"
+            onChange={(e) => setNum(e.target.value)}
+          />{' '}
+          <button className="btn btn-primary" onClick={() => handleSubmit(num)}>
+            Add Multi Entry
+          </button>
+        </span>
         <hr style={{ color: "white" }}></hr>
         <input
           type="text"
@@ -199,10 +259,10 @@ const App = () => {
         <br></br>
         <button className="btn btn-info" onClick={handleFindData}>
           Get data by conversation Id
-        </button><br></br><br></br>
-        <p style={{color:'white'}}>
-          {JSON.stringify(getData)}
-        </p>
+        </button>
+        <br></br>
+        <br></br>
+        <p style={{ color: "white" }}>{JSON.stringify(getData)}</p>
       </div>
     </div>
   );
