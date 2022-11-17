@@ -113,22 +113,6 @@ const App = () => {
         const db = dbPromise.result;
         const tx = db.transaction("emailData", "readwrite");
         const emailData = tx.objectStore("emailData");
-        const data = emailData.put({
-          id: conversationId,
-          conversationId,
-          name,
-        });
-        data.onsuccess = () => {
-          tx.oncomplete = () => {
-            db.close();
-            console.log("user added");
-          };
-          getAllData();
-        };
-        data.onerror = (error) => {
-          alert(error);
-          console.log(error);
-        };
         if (num) {
           for (let index = 1; index <= num; index++) {
             const data = emailData.put({
@@ -148,6 +132,23 @@ const App = () => {
               console.log(error);
             };
           }
+        } else {
+          const data = emailData.put({
+            id: conversationId,
+            conversationId,
+            name,
+          });
+          data.onsuccess = () => {
+            tx.oncomplete = () => {
+              db.close();
+              console.log("user added");
+            };
+            getAllData();
+          };
+          data.onerror = (error) => {
+            alert(error);
+            console.log(error);
+          };
         }
       };
     }
@@ -235,7 +236,7 @@ const App = () => {
         </form>
         <button className="btn btn-primary" onClick={() => handleSubmit(null)}>
           Add This Entry
-        </button>{' '}
+        </button>{" "}
         <span>
           <input
             type="number"
@@ -243,7 +244,7 @@ const App = () => {
             style={{ width: "100px" }}
             placeholder="Number"
             onChange={(e) => setNum(e.target.value)}
-          />{' '}
+          />{" "}
           <button className="btn btn-primary" onClick={() => handleSubmit(num)}>
             Add Multi Entry
           </button>
